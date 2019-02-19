@@ -15,6 +15,10 @@ defmodule CryptoLadder do
     GenServer.call(pid, :ping_binance)
   end
 
+  def get_time_binance(pid) do
+    GenServer.call(pid, :time_binance)
+  end
+
   @impl true
   def init(_) do
     IO.puts("from init")
@@ -56,6 +60,19 @@ defmodule CryptoLadder do
   @impl GenServer
   def handle_call(:ping_binance, _, state) do
     result = get_binance("/api/v1/ping")
+    {
+      :reply,
+      result,
+      state
+    }
+  end
+
+  @impl GenServer
+  def handle_call(:time_binance, _, state) do
+    result = case get_binance("/api/v1/time") do
+      {:ok, %{"serverTime" => time}} -> {:ok, time}
+      err -> err
+    end
 
     {
       :reply,
