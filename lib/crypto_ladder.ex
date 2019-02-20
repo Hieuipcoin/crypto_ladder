@@ -3,6 +3,10 @@ defmodule CryptoLadder do
 
   @endpoint "https://api.binance.com"
 
+  def hello do
+    :world
+  end
+
   def start do
     GenServer.start(__MODULE__, nil)
   end
@@ -17,6 +21,10 @@ defmodule CryptoLadder do
 
   def get_time_binance(pid) do
     GenServer.call(pid, :time_binance)
+  end
+
+  def get_all_prices_binance(pid) do
+    GenServer.call(pid, :all_prices)
   end
 
   @impl true
@@ -59,24 +67,33 @@ defmodule CryptoLadder do
 
   @impl GenServer
   def handle_call(:ping_binance, _, state) do
-    result = get_binance("/api/v1/ping")
+    {:ok, ping} = get_binance("/api/v1/ping")
     {
       :reply,
-      result,
+      ping,
       state
     }
   end
 
   @impl GenServer
+  # riki temporary ignore error return. impl later. ^^
   def handle_call(:time_binance, _, state) do
-    result = case get_binance("/api/v1/time") do
-      {:ok, %{"serverTime" => time}} -> {:ok, time}
-      err -> err
-    end
-
+    {:ok, %{"serverTime" => time}} = get_binance("/api/v1/time")
     {
       :reply,
-      result,
+      time,
+      state
+    }
+  end
+
+  @impl GenServer
+  # riki temporary ignore error return. impl later. ^^
+  def handle_call(:all_prices, _, state) do
+    {:ok, data} = get_binance("/api/v1/ticker/allPrices")
+    data = Enum.map(data, &Binance.SymbolPrice.new(&1))
+    {
+      :reply,
+      data,
       state
     }
   end
